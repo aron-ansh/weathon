@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import * as React from "react";
 import axios from "axios";
@@ -44,6 +45,7 @@ export default function Home() {
       });
       const history = response.data;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const historyMessages: Message[] = Object.values(history).flatMap((chat: any) => {
         const userMessage: Message = { text: chat.user.msg, sender: "user" };
         const botMessage: Message = { text: chat.bot.msg, sender: "ai" };
@@ -231,6 +233,7 @@ export default function Home() {
                               <SyntaxHighlighter
                                 language={language}
                                 style={solarizedDarkAtom}
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 {...(props as any)}
                               >
                                 {codeString}
