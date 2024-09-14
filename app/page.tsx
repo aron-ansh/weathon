@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import * as React from "react";
 import axios from "axios";
@@ -15,7 +14,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SendHorizonal, Copy, Check, Code, Monitor, BookOpen, DollarSign, Shuffle } from "lucide-react"; // Added Shuffle for random icon
+import {
+  SendHorizonal,
+  Copy,
+  Check,
+  Code,
+  Monitor,
+  BookOpen,
+  DollarSign,
+  Shuffle,
+  Info,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 type Message = {
@@ -23,10 +32,25 @@ type Message = {
   sender: "user" | "ai";
 };
 
+// Define a type for pluginIds that allows indexing with numbers
+type PluginIds = {
+  [key: number]: string[];
+};
+
+const pluginIds: PluginIds = {
+  1: ["plugin-1726271699"], // Coding and Technical
+  2: ["plugin-1726271699"], // Coding and Technical
+  3: ["plugin-1726286452"], // Soft Skills
+  4: ["plugin-1726276852"], // Finance
+  5: ["plugin-1712327325", "plugin-1713962163"], // Explore Random or Default
+};
+
 export default function Home() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [inputValue, setInputValue] = React.useState<string>("");
   const [selectedCard, setSelectedCard] = React.useState<number | null>(null);
+  const [selectedChatName, setSelectedChatName] = React.useState<string | null>(null); // State to store chat name
+  const [pluginInfo, setPluginInfo] = React.useState<string | null>(null); // State to store plugin information
   const [suggestions, setSuggestions] = React.useState<string[]>([
     "Hello",
     "How are you?",
@@ -70,10 +94,11 @@ export default function Home() {
       setLoading(true);
 
       try {
-        const chatid = "souvikgupta"; 
+        const chatid = "souvikgupta";
+        const selectedPluginIds = pluginIds[(selectedCard as number) || 5]; // Use default plugin IDs if none selected
 
         const response = await axios.post("https://api-demo-bice.vercel.app/api/home", {
-          plugid: ["plugin-1712327325", "plugin-1713962163"],
+          plugid: selectedPluginIds,
           query: inputValue,
           chatid
         });
@@ -103,7 +128,17 @@ export default function Home() {
   };
 
   const handleCardClick = (cardIndex: number) => {
+    const cardNames = ["Coding", "Tech", "Soft Skills", "Finance", "Explore Random"];
+    const pluginDescriptions = [
+      "Coding and Technical Plugins",
+      "Coding and Technical Plugins",
+      "Soft Skills Plugins",
+      "Finance Plugins",
+      "Explore Random or Default Plugins"
+    ];
     setSelectedCard(cardIndex);
+    setSelectedChatName(cardNames[cardIndex - 1]); // Store selected card name
+    setPluginInfo(pluginDescriptions[cardIndex - 1]); // Set plugin information
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -140,13 +175,12 @@ export default function Home() {
               <motion.div
                 key={preference}
                 whileHover={{ scale: 1.05 }}
-                className="cursor-pointer"
+                className="relative cursor-pointer"
                 onClick={() => handleCardClick(preference)}
               >
-                <Card className="bg-[#1e1e1e] text-white hover:bg-[#2b2b2b] border border-gray-700 transition-colors duration-300">
+                <Card className="bg-[#1e1e1e] text-white hover:bg-[#2b2b2b] border border-gray-700 transition-colors duration-300 relative">
                   <CardHeader>
                     <CardTitle>
-                      {/* Display appropriate icons for each card */}
                       {preference === 1 && <Code className="mr-2" />}
                       {preference === 2 && <Monitor className="mr-2" />}
                       {preference === 3 && <BookOpen className="mr-2" />}
@@ -181,12 +215,26 @@ export default function Home() {
                         : preference === 2
                         ? "Learn about the latest tech trends and tools."
                         : preference === 3
-                        ? "Improve your communication "
+                        ? "Improve your communication skills."
                         : preference === 4
                         ? "Get insights on personal finance and investments."
                         : "Discover random subjects and gain new perspectives."}
                     </p>
                   </CardContent>
+                  <div className="absolute top-2 right-2 group">
+                    <Info size={20} className="text-gray-500 cursor-pointer" />
+                    <div className="absolute top-full right-0 hidden group-hover:block bg-gray-700 text-white p-2 rounded-md transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+                      {preference === 1
+                        ? "Information about coding."
+                        : preference === 2
+                        ? "Information about tech."
+                        : preference === 3
+                        ? "Information about soft skills."
+                        : preference === 4
+                        ? "Information about finance."
+                        : "Information about random topics."}
+                    </div>
+                  </div>
                 </Card>
               </motion.div>
             ))}
@@ -199,14 +247,22 @@ export default function Home() {
           className="fixed inset-0 flex flex-col p-4 bg-[#1e1e1e]"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">New Chat</h2>
+            <h2 className="text-xl font-bold">{selectedChatName} Chat</h2> {/* Display selected chat name */}
             <Button
-              onClick={() => setSelectedCard(null)}
+              onClick={() => {
+                setSelectedCard(null);
+                setPluginInfo(null); // Reset plugin info when deselecting card
+              }}
               className="text-white hover:text-gray-500"
             >
               X
             </Button>
           </div>
+          {pluginInfo && (
+            <div className="mb-4 p-2 bg-gray-800 rounded-md border border-gray-700">
+              <strong>Active Plugin:</strong> {pluginInfo}
+            </div>
+          )}
           <div className="flex-1 flex flex-col space-y-4 overflow-y-auto p-4 border border-gray-700 rounded-lg bg-[#2e2e2e]">
             {messages.map((message, index) => (
               <div
@@ -222,6 +278,7 @@ export default function Home() {
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                         code({ node, className, children, ...props }) {
                           const language = /language-(\w+)/.exec(
                             className || ""
@@ -233,8 +290,6 @@ export default function Home() {
                               <SyntaxHighlighter
                                 language={language}
                                 style={solarizedDarkAtom}
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                {...(props as any)}
                               >
                                 {codeString}
                               </SyntaxHighlighter>
